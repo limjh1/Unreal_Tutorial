@@ -37,6 +37,9 @@ void AMyCharacter::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	AnimInstance = Cast<UMyAnimInstance>(GetMesh()->GetAnimInstance());
+	//몽타주 애니메이션 끝나면 호출하는 것
+	AnimInstance->OnMontageEnded.AddDynamic(this,&AMyCharacter::OnAttackMontageEnded);
 }
 
 // Called every frame
@@ -61,17 +64,19 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 void AMyCharacter::Attack() 
 {
-	auto AnimInstance = Cast<UMyAnimInstance>(GetMesh()->GetAnimInstance());
-	if (AnimInstance)
-	{
-		AnimInstance->PlayAttackMontage();
-	}
+	if (IsAttacking) return;
+
+	AnimInstance->PlayAttackMontage();
+
+	AnimInstance->JumpToSection(AttackIndex); // 0 1 2
+	AttackIndex = (AttackIndex + 1) % 3;
+
+	IsAttacking = true;
 }
 
 void AMyCharacter::UpDown(float Value)
 {
-	if (Value == 0.f)
-		return;
+	UpDownValue = Value;
 
 	//UE_LOG(LogTemp, Warning, TEXT("UpDown %f"), Value);
 	AddMovementInput(GetActorForwardVector(), Value); // return (GetActor~ * Value) 
@@ -80,8 +85,7 @@ void AMyCharacter::UpDown(float Value)
 
 void AMyCharacter::LeftRight(float Value)
 {
-	if (Value == 0.f)
-		return;
+	LeftRightValue = Value;
 
 	//UE_LOG(LogTemp, Warning, TEXT("LeftRight %f"), Value);
 	AddMovementInput(GetActorRightVector(), Value);
@@ -90,5 +94,10 @@ void AMyCharacter::LeftRight(float Value)
 void AMyCharacter::Yaw(float Value)
 {
 	AddControllerYawInput(Value);
+}
+
+void AMyCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bool blnterrupted)
+{
+	IsAttacking = false;
 }
 

@@ -4,6 +4,7 @@
 #include "MyAnimInstance.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PawnMovementComponent.h"
+#include "MyCharacter.h"
 
 UMyAnimInstance::UMyAnimInstance()
 {
@@ -24,10 +25,13 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 	{
 		Speed = pawn->GetVelocity().Size(); //속도값을 speed에 매 초 갱신
 
-		auto Character = Cast<ACharacter>(pawn);
+		auto Character = Cast<AMyCharacter>(pawn);
 		if (Character) //캐릭터 Null 체크
 		{
 			isFalling = Character->GetMovementComponent()->IsFalling();
+
+			Vertical = Character->UpDownValue;
+			Horizontal = Character->LeftRightValue;
 		}
 	}
 }
@@ -35,8 +39,23 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 //클릭한 순간에만 들고옴
 void UMyAnimInstance::PlayAttackMontage()
 {
-	if (!Montage_IsPlaying(AttackMontage)) //플레이 중이라면 중복해서 플레이 제한
-	{
-		Montage_Play(AttackMontage, 1.f);
-	}
+	Montage_Play(AttackMontage, 1.f);
+}
+
+void UMyAnimInstance::JumpToSection(int32 SectionIndex)
+{
+	// 0 1 2 될 때마다 어떤 섹션을 해줄것인지 바꾸게 됨
+	FName Name = GetAttackMontageName(SectionIndex);
+	Montage_JumpToSection(Name, AttackMontage);
+}
+
+FName UMyAnimInstance::GetAttackMontageName(int32 SectionIndex)
+{
+	//Attack 0 1 2
+	return FName(*FString::Printf(TEXT("Attack%d"), SectionIndex));
+}
+
+void UMyAnimInstance::AnimNotify_AttackHit()
+{
+	UE_LOG(LogTemp, Log, TEXT("Anim_AttackNotify"));
 }
