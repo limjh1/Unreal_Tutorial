@@ -6,6 +6,8 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "MyAnimInstance.h"
+#include "DrawDebugHelpers.h" //디버그 그림 그리기
+#include "MyWeapon.h"
 
 // Sets default values
 AMyCharacter::AMyCharacter()
@@ -30,16 +32,52 @@ AMyCharacter::AMyCharacter()
 	{
 		GetMesh()->SetSkeletalMesh(SM.Object); //메쉬 가져온거 할당
 	}
+
+	//FName WeaponSocket(TEXT("hand_l_socket")); //hand_l_socket만들어주고
+	//if (GetMesh()->DoesSocketExist(WeaponSocket)) //찾아서
+	//{
+	//	Weapon = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("WEAPON")); //스태틱메쉬컴포넌트 만들어주고
+
+	//	static ConstructorHelpers::FObjectFinder<UStaticMesh> SW(TEXT("StaticMesh'/Game/ParagonGreystone/FX/Meshes/Heroes/Greystone/SM_Greystone_Blade_01.SM_Greystone_Blade_01'"));
+	//	if (SW.Succeeded()) //잘 불러왔으면
+	//	{
+	//		Weapon->SetStaticMesh(SW.Object); //무기 추가, 매쉬 로드해서
+	//	}
+
+	//	Weapon->SetupAttachment(GetMesh(), WeaponSocket); // 어태치먼트로 붙
+	//}
 }
 
 // Called when the game starts or when spawned
 void AMyCharacter::BeginPlay()
 {
-	Super::BeginPlay();
+	Super::BeginPlay();		
+
+	FName WeaponSocket(TEXT("hand_l_socket")); //hand_l_socket만들어주고
+
+	//새로 스폰 //무기가 0,0에서 생성
+	/*auto CurrentWeapon = GetWorld()->SpawnActor<AMyWeapon>(FVector::ZeroVector, FRotator::ZeroRotator); 
 	
+
+	if (CurrentWeapon) //새로 생성한게 붙음
+	{
+		CurrentWeapon->AttachToComponent(GetMesh(),
+			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+			WeaponSocket);
+	}
+	*/
+}
+
+void AMyCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+
 	AnimInstance = Cast<UMyAnimInstance>(GetMesh()->GetAnimInstance());
-	//몽타주 애니메이션 끝나면 호출하는 것
-	AnimInstance->OnMontageEnded.AddDynamic(this,&AMyCharacter::OnAttackMontageEnded);
+	if (AnimInstance) {
+		//몽타주 애니메이션 끝나면 호출하는 것
+		AnimInstance->OnMontageEnded.AddDynamic(this, &AMyCharacter::OnAttackMontageEnded);
+		AnimInstance->OnAttackHit.AddUObject(this, &AMyCharacter::AttackCheck);
+	}
 }
 
 // Called every frame
@@ -72,6 +110,42 @@ void AMyCharacter::Attack()
 	AttackIndex = (AttackIndex + 1) % 3;
 
 	IsAttacking = true;
+}
+
+void AMyCharacter::AttackCheck()
+{
+	FHitResult HitResult;
+	FCollisionQueryParams Params(NAME_None, false, this);
+
+	float AttackRange = 100.f;
+	float AttackRadius = 50.f;
+
+	bool bResult = GetWorld()->SweepSingleByChannel(
+		OUT HitResult,
+		GetActorLocation(),
+		GetActorLocation() + GetActorForwardVector() * AttackRange,
+		FQuat::Identity,
+		ECollisionChannel::ECC_GameTraceChannel2,
+		FCollisionShape::MakeSphere(AttackRadius),
+		Params);
+
+	//스킬, 평타 범위 디버그로 그리기
+	FVector Vec = GetActorForwardVector() * AttackRange;
+	FVector Center = GetActorLocation() + Vec * 0.5f;
+	float HalfHeight = AttackRange * 0.5f + AttackRadius;
+	FQuat Rotation = FRotationMatrix::MakeFromZ(Vec).ToQuat();
+	FColor DrawColor;
+	if (bResult)
+		DrawColor = FColor::Green;
+	else
+		DrawColor = FColor::Red;
+
+
+	DrawDebugCapsule(GetWorld(), Center, HalfHeight, AttackRadius, Rotation, DrawColor, false, 1.f);
+
+	if (bResult && HitResult.Actor.IsValid()) {
+		UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.Actor->GetName());
+	}
 }
 
 void AMyCharacter::UpDown(float Value)

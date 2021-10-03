@@ -57,5 +57,7 @@ FName UMyAnimInstance::GetAttackMontageName(int32 SectionIndex)
 
 void UMyAnimInstance::AnimNotify_AttackHit()
 {
-	UE_LOG(LogTemp, Log, TEXT("Anim_AttackNotify"));
+	//UE_LOG(LogTemp, Log, TEXT("Anim_AttackNotify"));
+
+	OnAttackHit.Broadcast(); //공격일어날 때 델레게이트 선언한거로 메세지 받아라, 구독한 사람한테 Attack이 호출 되는거임
 }
