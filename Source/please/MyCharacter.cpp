@@ -8,6 +8,9 @@
 #include "MyAnimInstance.h"
 #include "DrawDebugHelpers.h" //디버그 그림 그리기
 #include "MyWeapon.h"
+#include "MyStatComponent.h"
+#include "Components/WidgetComponent.h"
+#include "MyCharacterWidget.h"
 
 // Sets default values
 AMyCharacter::AMyCharacter()
@@ -46,7 +49,23 @@ AMyCharacter::AMyCharacter()
 
 	//	Weapon->SetupAttachment(GetMesh(), WeaponSocket); // 어태치먼트로 붙
 	//}
+
+	Stat = CreateDefaultSubobject<UMyStatComponent>(TEXT("STAT"));
+	HpBar = CreateDefaultSubobject<UWidgetComponent>(TEXT("HPBAR"));
+	HpBar->SetupAttachment(GetMesh()); //상속 구조 메쉬에 붙임
+	HpBar->SetRelativeLocation(FVector(0.f, 0.f, 220.f));
+	//2D형식으로 스크린에 보여주기
+	HpBar->SetWidgetSpace(EWidgetSpace::Screen);
+
+
+	static ConstructorHelpers::FClassFinder<UUserWidget> UW(TEXT("WidgetBlueprint'/Game/UI/WBP_HpBar.WBP_HpBar_C'")); //_C붙여야함
+	if (UW.Succeeded())
+	{
+		HpBar->SetWidgetClass(UW.Class);
+		HpBar->SetDrawSize(FVector2D(200.f, 50.f));
+	}
 }
+
 
 // Called when the game starts or when spawned
 void AMyCharacter::BeginPlay()
@@ -78,6 +97,14 @@ void AMyCharacter::PostInitializeComponents()
 		AnimInstance->OnMontageEnded.AddDynamic(this, &AMyCharacter::OnAttackMontageEnded);
 		AnimInstance->OnAttackHit.AddUObject(this, &AMyCharacter::AttackCheck);
 	}
+
+	//초기화
+	HpBar->InitWidget();
+
+	// TODO
+	auto HpWidget = Cast<UMyCharacterWidget>(HpBar->GetUserWidgetObject());
+	if (HpWidget)
+		HpWidget->BindHp(Stat); //BindHP호출이 되면서
 }
 
 // Called every frame
@@ -143,8 +170,13 @@ void AMyCharacter::AttackCheck()
 
 	DrawDebugCapsule(GetWorld(), Center, HalfHeight, AttackRadius, Rotation, DrawColor, false, 1.f);
 
+	//충돌할 경우
 	if (bResult && HitResult.Actor.IsValid()) {
 		UE_LOG(LogTemp, Log, TEXT("Hit Actor : %s"), *HitResult.Actor->GetName());
+
+		FDamageEvent DamageEvent;
+		//피해자 호출
+		HitResult.Actor->TakeDamage(Stat->GetAttack(), DamageEvent, GetController(), this);
 	}
 }
 
@@ -173,5 +205,13 @@ void AMyCharacter::Yaw(float Value)
 void AMyCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bool blnterrupted)
 {
 	IsAttacking = false;
+}
+
+float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
+{
+	Stat->OnAttacked(DamageAmount);
+
+	return DamageAmount;
+	
 }
 

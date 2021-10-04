@@ -38,6 +38,8 @@ public:
 	UFUNCTION()
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool blnterrupted);
 
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
+
 private:
 	UPROPERTY(VisibleAnywhere)
 	class USpringArmComponent* SpringArm; //¼¿Ä«ºÀ
@@ -64,4 +66,10 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	UStaticMeshComponent* Weapon;
+
+	UPROPERTY(VisibleAnywhere)
+	class UMyStatComponent* Stat;
+
+	UPROPERTY(VisibleAnywhere)
+	class UWidgetComponent* HpBar;
 };
