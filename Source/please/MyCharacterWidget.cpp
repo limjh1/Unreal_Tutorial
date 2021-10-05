@@ -15,6 +15,6 @@ void UMyCharacterWidget::BindHp(class UMyStatComponent* StatComp)
 
 void UMyCharacterWidget::UpdateHp()
 {
-	if(CurrentStatComp.IsVaild())
+	if(CurrentStatComp.IsValid())
 		PB_HpBar->SetPercent(CurrentStatComp->GetHpRatio());
 }
