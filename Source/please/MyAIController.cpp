@@ -4,10 +4,23 @@
 #include "MyAIController.h"
 #include "NavigationSystem.h"
 #include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "BehaviorTree/BehaviorTree.h"
+#include "BehaviorTree/BlackboardData.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 AMyAIController::AMyAIController()
 {
+	static ConstructorHelpers::FObjectFinder<UBehaviorTree> BT(TEXT("BehaviorTree'/Game/AI/BT_MyCharacter.BT_MyCharacter'"));
+	if (BT.Succeeded())
+	{
+		BehaviorTree = BT.Object;
+	}
 
+	static ConstructorHelpers::FObjectFinder<UBlackboardData> BD(TEXT("BlackboardData'/Game/AI/BB_MyCharacter.BB_MyCharacter'"));
+	if (BD.Succeeded())
+	{
+		BlackboardData = BD.Object;
+	}
 }
 
 void AMyAIController::OnPossess(APawn* InPawn)
@@ -15,14 +28,22 @@ void AMyAIController::OnPossess(APawn* InPawn)
 	Super::OnPossess(InPawn);
 
 	//2초마다 한번씩 랜덤무브 호출
-	GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AMyAIController::RandomMove, 2.f, true);
+	//GetWorld()->GetTimerManager().SetTimer(TimerHandle, this, &AMyAIController::RandomMove, 2.f, true);
+
+	if (UseBlackboard(BlackboardData, Blackboard))
+	{
+		if (RunBehaviorTree(BehaviorTree))
+		{
+			// TODO
+		}
+	}
 }
 
 void AMyAIController::OnUnPossess()
 {
 	Super::OnUnPossess();
 
-	GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
+	//GetWorld()->GetTimerManager().ClearTimer(TimerHandle);
 }
 
 void AMyAIController::RandomMove()
