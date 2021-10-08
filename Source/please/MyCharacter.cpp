@@ -30,7 +30,7 @@ AMyCharacter::AMyCharacter()
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SM(TEXT("SkeletalMesh'/Game/ParagonGreystone/Characters/Heroes/Greystone/Meshes/Greystone.Greystone'")); //메쉬 하나 찾아서 가져오고
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SM(TEXT("SkeletalMesh'/Game/ParagonGreystone/Characters/Heroes/Greystone/Skins/Novaborn/Meshes/Greystone_Novaborn.Greystone_Novaborn'")); //메쉬 하나 찾아서 가져오고
 
 	if (SM.Succeeded()) //성공했으면
 	{
@@ -209,6 +209,7 @@ void AMyCharacter::Yaw(float Value)
 void AMyCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bool blnterrupted)
 {
 	IsAttacking = false;
+	OnAttackEnd.Broadcast(); //공격끝났다고 전파
 }
 
 float AMyCharacter::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser)
