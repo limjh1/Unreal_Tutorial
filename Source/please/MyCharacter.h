@@ -33,11 +33,18 @@ public:
 	void Attack();
 	void AttackCheck();
 
+	static void characterDestroy();
+
 	FOnAttackEnd OnAttackEnd;
 
+#pragma region CAMERA
 	void UpDown(float Value);
 	void LeftRight(float Value);
 	void Yaw(float Value);
+	void Pitch(float Value);
+	void ZoomIn();
+	void ZoomOut();
+#pragma endregion
 
 	UFUNCTION()
 	void OnAttackMontageEnded(UAnimMontage* Montage, bool blnterrupted);
@@ -76,4 +83,15 @@ public:
 
 	UPROPERTY(VisibleAnywhere)
 	class UWidgetComponent* HpBar;
+
+	UPROPERTY()
+	FVector2D cameraInput;
+
+	UPROPERTY()
+	float ZoomFactor;
+
+	UPROPERTY()
+	bool bZoomingIn;
+
 };
+

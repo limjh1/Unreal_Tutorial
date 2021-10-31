@@ -25,7 +25,7 @@ AMyCharacter::AMyCharacter()
 	SpringArm->SetupAttachment(GetCapsuleComponent()); //¼¿Ä«ºÀÀ» Ä¸½¶ÄÄÆ÷³ÍÆ®¿¡ ºÙ
 	Camera->SetupAttachment(SpringArm); //Ä«¸Þ¶ó¸¦ ¼¿Ä«ºÀ¿¡ ºÙ
 	
-	SpringArm->TargetArmLength = 500.f; //¼¿Ä«ºÀ ±æÀÌ
+	SpringArm->TargetArmLength = 900.f; //¼¿Ä«ºÀ ±æÀÌ
 	SpringArm->SetRelativeRotation(FRotator(-35.f, 0.f, 0.f));
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
@@ -88,7 +88,9 @@ void AMyCharacter::BeginPlay()
 			FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 			WeaponSocket);
 	}
-	*/
+	*/	
+	
+	
 }
 
 void AMyCharacter::PostInitializeComponents()
@@ -116,6 +118,40 @@ void AMyCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+#pragma region CAMERA ZOOM IN / OUT
+	if (bZoomingIn)
+	{
+		ZoomFactor += DeltaTime * 2.0f;
+	}
+	else
+	{
+		ZoomFactor -= DeltaTime * 4.0f;
+	}
+	ZoomFactor = FMath::Clamp(ZoomFactor, 0.0f, 1.0f);
+	Camera->FieldOfView = FMath::Lerp(90.f, 60.f, ZoomFactor);
+#pragma endregion
+
+	/*{
+		FRotator NewRotation = GetActorRotation();
+		NewRotation.Yaw = cameraInput.X;
+		SetActorRotation(NewRotation);
+	}*/
+
+	{
+		FRotator NewRotation = SpringArm->GetComponentRotation();
+		NewRotation.Pitch = FMath::Clamp(NewRotation.Pitch + cameraInput.Y, -80.0f, -15.0f);						
+		SpringArm->SetWorldRotation(NewRotation);
+	}		
+	
+	// HP == 0
+	if (&UMyStatComponent::GetHp == 0)
+	{
+		//Destroy();
+		
+		//UE_LOG(LogTemp, Log, TEXT("DEAD Actor : %s"), &AMyCharacter::GetDebugName);
+		UE_LOG(LogTemp, Warning, TEXT("Actor is DEAD"));
+	}
+	
 }
 
 // Called to bind functionality to input
@@ -125,11 +161,18 @@ void AMyCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &AMyCharacter::Jump);
 	PlayerInputComponent->BindAction(TEXT("Attack"), EInputEvent::IE_Pressed, this, &AMyCharacter::Attack);
+	PlayerInputComponent->BindAction(TEXT("ZoomIn"), EInputEvent::IE_Pressed, this, &AMyCharacter::ZoomIn);
+	PlayerInputComponent->BindAction(TEXT("ZoomOut"), EInputEvent::IE_Pressed, this, &AMyCharacter::ZoomOut);
 
 	PlayerInputComponent->BindAxis(TEXT("UpDown"), this, &AMyCharacter::UpDown);
 	PlayerInputComponent->BindAxis(TEXT("LeftRight"), this, &AMyCharacter::LeftRight);
-	PlayerInputComponent->BindAxis(TEXT("Yaw"), this, &AMyCharacter::Yaw);
+	PlayerInputComponent->BindAxis(TEXT("Yaw"), this, &AMyCharacter::Yaw);	
+	PlayerInputComponent->BindAxis(TEXT("Pitch"), this, &AMyCharacter::Pitch);	
+
+
 }
+
+
 
 void AMyCharacter::Attack() 
 {
@@ -184,26 +227,53 @@ void AMyCharacter::AttackCheck()
 	}
 }
 
+void AMyCharacter::characterDestroy()
+{
+	&AActor::Destroy;
+}
+
 void AMyCharacter::UpDown(float Value)
 {
 	UpDownValue = Value;
 
-	//UE_LOG(LogTemp, Warning, TEXT("UpDown %f"), Value);
+	////UE_LOG(LogTemp, Warning, TEXT("UpDown %f"), Value);
 	AddMovementInput(GetActorForwardVector(), Value); // return (GetActor~ * Value) 
 
+	//AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X), Value);
 }
 
 void AMyCharacter::LeftRight(float Value)
 {
 	LeftRightValue = Value;
 
-	//UE_LOG(LogTemp, Warning, TEXT("LeftRight %f"), Value);
+	////UE_LOG(LogTemp, Warning, TEXT("LeftRight %f"), Value);
 	AddMovementInput(GetActorRightVector(), Value);
+
+	AddMovementInput(FRotationMatrix(FRotator(0.0f,GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y), Value);
 }
 
 void AMyCharacter::Yaw(float Value)
 {
-	AddControllerYawInput(Value);
+	AddControllerYawInput(Value / 5); // value¿¡ ³ª´©´Â °ªÀ¸·Î ¸¶¿ì½º ¹Î°¨µµ ¼³Á¤°¡´É
+
+	cameraInput.X = Value;
+}
+
+void AMyCharacter::Pitch(float Value)
+{
+	AddControllerPitchInput(Value);
+
+	cameraInput.Y = Value;
+}
+
+void AMyCharacter::ZoomIn()
+{
+	bZoomingIn = true;
+}
+
+void AMyCharacter::ZoomOut()
+{
+	bZoomingIn = false;
 }
 
 void AMyCharacter::OnAttackMontageEnded(UAnimMontage* Montage, bool blnterrupted)

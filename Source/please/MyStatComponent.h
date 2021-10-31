@@ -35,7 +35,7 @@ public:
 	int32 GetHp() { return Hp; }
 	int32 GetMaxHp() { return MaxHp; }
 	float GetHpRatio() { return Hp / (float)MaxHp; }
-	int32 GetAttack() { return Attack; }
+	int32 GetAttack() { return Attack; }	
 
 private:
 	//현재 레벨,HP,공격력

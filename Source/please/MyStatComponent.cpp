@@ -3,6 +3,8 @@
 
 #include "MyStatComponent.h"
 #include "MyGameInstance.h"
+#include "MyAnimInstance.h"
+#include "MyCharacter.h"
 #include "Kismet/GameplayStatics.h"
 
 // Sets default values for this component's properties
@@ -16,6 +18,8 @@ UMyStatComponent::UMyStatComponent()
 	bWantsInitializeComponent = true; //이니셜라이즈 컴포넌츠 활용하려면
 
 	Level = 1;
+
+	
 }
 
 
@@ -55,8 +59,12 @@ void UMyStatComponent::SetLevel(int32 NewLevel)
 void UMyStatComponent::SetHp(int32 NewHp)
 {
 	Hp = NewHp;
-	if (Hp < 0) //죽을 때 함수 처리, 경험치 등
-		Hp = 0;
+	if (Hp < 0) { //죽을 때 함수 처리, 경험치 등		
+		Hp = 0;					
+		UMyAnimInstance::isMinHp();
+		AMyCharacter::characterDestroy();
+		UE_LOG(LogTemp, Warning, TEXT("DEAD"));
+	}
 
 	OnHpChanged.Broadcast(); //델레게이트 리스너가 받음(이거 공부하기)
 }

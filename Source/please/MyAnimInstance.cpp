@@ -6,13 +6,21 @@
 #include "GameFramework/PawnMovementComponent.h"
 #include "MyCharacter.h"
 
+
 UMyAnimInstance::UMyAnimInstance()
 {
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> AM(TEXT("AnimMontage'/Game/Animations/Greystone_Skeleton_Montage.Greystone_Skeleton_Montage'"));
 	if (AM.Succeeded())
 	{
 		AttackMontage = AM.Object;
-	}
+	}			
+}
+
+bool UMyAnimInstance::individualDeath = false;
+void UMyAnimInstance::isMinHp()
+{		
+	// 죽을 때 보여줄 ANIMATION	
+	individualDeath = true;
 }
 
 //매 틱마다 들고옴
@@ -29,9 +37,19 @@ void UMyAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 		if (Character) //캐릭터 Null 체크
 		{
 			isFalling = Character->GetMovementComponent()->IsFalling();
-
+			
 			Vertical = Character->UpDownValue;
-			Horizontal = Character->LeftRightValue;
+			Horizontal = Character->LeftRightValue;		
+
+			if (individualDeath == true)
+			{
+				isSetDeath = true;
+				if (isSetDeath == true) {
+					UE_LOG(LogTemp, Log, TEXT("SUCCESS! %s"), *Character->GetName());
+				}
+				else if (isSetDeath == false)
+					UE_LOG(LogTemp, Log, TEXT("FAILED! %s"), *Character->GetName());				
+			}
 		}
 	}
 }

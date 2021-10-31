@@ -19,6 +19,8 @@ class PLEASE_API UMyAnimInstance : public UAnimInstance
 public:
 	UMyAnimInstance();
 
+	static void isMinHp();
+
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 	void PlayAttackMontage();
@@ -26,16 +28,21 @@ public:
 
 	FName GetAttackMontageName(int32 SectionIndex);
 
+//	void GetDeath() { isSetDeath = false; }
+
 private:
 	UFUNCTION()
-		void AnimNotify_AttackHit(); //AnimNotify_~~();
+	void AnimNotify_AttackHit(); //AnimNotify_~~();
 
 private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn, Meta=(AllowPrivateAccess=true))
 	float Speed;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
-	bool isFalling;
+	bool isFalling;	
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
+	bool isSetDeath;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	UAnimMontage* AttackMontage;
@@ -46,6 +53,11 @@ private:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta = (AllowPrivateAccess = true))
 	float Vertical;
 
+	static bool individualDeath;
+
 public:
 	FOnAttackHit OnAttackHit;
+
+	UPROPERTY(VisibleAnywhere)
+	class AMyCharacter* charcter;
 };
